@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Конфигурация с ключами (если будете использовать .env)
+.env
+config_local.py
+key_api
+
+# Telethon сессии
+*.session
+news_session.session
+
+# Обработанные ID сообщений
+processed_ids.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Логи
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
