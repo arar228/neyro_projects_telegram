@@ -1,150 +1,61 @@
-# 🤖 Neyro Telegram Crypto Bot (TON Ecosystem)
+# Neyro — Telegram Editorial Automation
 
-[![EN](https://img.shields.io/badge/Language-EN-green.svg)](#english)
-[![RU](https://img.shields.io/badge/Language-RU-blue.svg)](#по-русски)
+A Python application that connects Telegram news collection, AI-assisted writing, image generation, and scheduled channel publishing. The implementation focuses on a TON/market-news editorial workflow with configurable prompts, source filtering, and duplicate tracking.
 
-<a name="english"></a>
-![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
-![Telegram API](https://img.shields.io/badge/Telegram-API-blue.svg)
-![DeepSeek API](https://img.shields.io/badge/DeepSeek-AI-green.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+[Architecture](#architecture) · [Setup](#setup-requirements) · [Русский](docs/README.ru.md) · [Existing deployment notes](DEPLOY.md)
 
-**Neyro Telegram Crypto Bot** is an autonomous AI-powered Telegram bot (using DeepSeek API) designed to manage a cryptocurrency channel. The bot specializes in the TON ecosystem and automatically generates unique, engaging content in a predefined authorial tone of voice.
+## Engineering focus
 
-This project demonstrates the integration of LLMs (Large Language Models) with messengers, asynchronous data parsing, and automated posting. It is an excellent example of content automation for Web3 and crypto communities.
+- **Input pipeline:** Telethon retrieves channel posts; filtering selects relevant material for the editorial flow.
+- **Content pipeline:** DeepSeek generates text; a separate image-generation adapter handles media requests.
+- **Publishing lifecycle:** command handlers, scheduling, processed IDs, and post hashes coordinate automated and operator-triggered publishing.
+- **Market context:** CoinGecko price data supports scheduled TON market summaries.
 
-## 🚀 Key Features
+## Architecture
 
-- **AI Content Generation:** Uses DeepSeek API to create unique posts with a specific personality and tone of voice.
-- **Asynchronous Parsing (Telethon):** Automatically monitors other Telegram channels (e.g., @markettwits) to gather fresh news.
-- **Smart Filtering:** Finds relevant news using keywords (cryptocurrencies, fiat, metals, memes, etc.).
-- **CoinGecko Integration:** Regularly fetches TON prices and automatically publishes market overviews (morning and evening).
-- **Flexible Scheduling System:** Publishes posts at specified (including randomized) intervals to simulate real human behavior.
+```text
+Telegram sources / operator commands → filtering → text and image generation
+                                                         ↓
+                                  duplicate checks → Telegram channel publishing
+```
 
-## 🛠 Tech Stack
+| Source | Responsibility |
+|---|---|
+| [bot.py](bot.py) — `NewsParser` | Telethon collection and processed-item tracking |
+| [bot.py](bot.py) — `DeepSeekClient`, `PriceFetcher` | Text generation and market-data integration |
+| [bot.py](bot.py) — `NanoBananaImageGenerator` | Image-generation requests and task polling |
+| [bot.py](bot.py) — `TelegramChannelBot` | Publication state, scheduling, and command handling |
+| [config.py](config.py) | Environment readers, prompts, filters, and timing settings |
+| [Procfile](Procfile), [railway.json](railway.json) | Worker entry-point declarations |
 
-- **Programming Language:** Python 3.8+
-- **Frameworks & Libraries:**
-  - `python-telegram-bot` — Interaction with Telegram Bot API
-  - `Telethon` — Asynchronous parsing of Telegram channels
-  - `openai` — Interaction with DeepSeek API
-  - `requests` — REST API requests (CoinGecko)
-- **Infrastructure / Deployment:** Ready for deployment on Railway (Nixpacks) and Heroku (`Procfile`).
+**Declared stack:** Python, `python-telegram-bot==20.7`, `Telethon==1.34.0`, Requests, and python-dotenv. The current implementation calls providers through Requests; an OpenAI SDK is not declared in this snapshot.
 
-## 🗂 Project Architecture
+## Setup requirements
 
-- `bot.py` — The main module containing the bot's business logic, message handlers, and task scheduler.
-- `config.py` — Configuration module (environment variables, system prompts, keyword lists).
-- `bot_nanobanana_fix.py` — Auxiliary module for integrating third-party media generation APIs.
-- `railway.json` / `Procfile` / `DEPLOY.md` — Files for CI/CD setup and cloud platform deployment.
+```bash
+git clone https://github.com/arar228/neyro_projects_telegram.git
+cd neyro_projects_telegram
+python -m venv .venv
+# Activate .venv using your shell's activation command.
+python -m pip install -r requirements.txt
+```
 
-## ⚙️ Installation & Setup
+Provision your own environment or ignored local `.env`, which `config.py` loads. Review these names according to the enabled workflow:
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/arar228/neyro_projects_telegram.git
-   cd neyro_projects_telegram
-   ```
+| Area | Configuration names |
+|---|---|
+| Publishing | `TELEGRAM_BOT_TOKEN`, `CHANNEL_ID`, `ADMIN_USER_ID`, `ALLOWED_GENETAT_USERS` |
+| Source account | `TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `NEWS_CHANNEL`, `NEWS_COUNT` |
+| Text generation | `DEEPSEEK_API_KEY`, `DEEPSEEK_API_URL` |
+| Image generation | `NANOBANANA_API_KEY`, `NANOBANANA_API_URL` |
+| Market data | `COINGECKO_API_URL`, `TON_COIN_ID` |
 
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+Keep the existing spelling `ALLOWED_GENETAT_USERS` when configuring this revision. Review prompts and permitted source material, authorize the source account, and grant the bot publishing rights only to the intended test channel.
 
-3. **Configure environment variables:**
-   The project uses `python-dotenv`. Create a `.env` file in the project root and add your keys:
-   ```env
-   TELEGRAM_BOT_TOKEN=your_bot_token
-   DEEPSEEK_API_KEY=your_deepseek_key
-   CHANNEL_ID=your_channel_id
-   TELEGRAM_API_ID=your_api_id
-   TELEGRAM_API_HASH=your_api_hash
-   ```
+`python bot.py` is the worker command declared by both deployment files. Starting it can publish posts and incur provider usage. Scripts with `test` in their names can also call providers or publish; inspect their behavior before running them.
 
-4. **Run the bot:**
-   ```bash
-   python bot.py
-   ```
+## Review status
 
-## 🔐 Security
+Source review: **2026-09-07**. This pass changed documentation only and did not authenticate accounts, call providers, publish messages, or confirm an active deployment. Deployment declarations are present; a GitHub Actions workflow and verified offline test suite are not included in this snapshot.
 
-All secret keys, tokens, and private configurations are excluded from the repository using `.gitignore`. This guarantees no leaks of sensitive data. It is highly recommended to use Environment Variables when deploying to a server (Railway, Heroku, VPS).
-
-## 📝 License
-
-This project is licensed under the MIT License. Open source usage is permitted.
-
----
-*Developed and designed as part of a professional portfolio.*
-
----
-<br>
-
-<a name="по-русски"></a>
-# 🇷🇺 Описание на русском (Russian Description)
-
-**Neyro Telegram Crypto Bot** — это автономный Telegram-бот на базе искусственного интеллекта (DeepSeek API), предназначенный для ведения криптовалютного канала. Бот специализируется на экосистеме TON и автоматически генерирует уникальный, вовлекающий контент в заданном авторском стиле.
-
-Проект демонстрирует интеграцию LLM (Large Language Models) с мессенджерами, асинхронный парсинг данных и автоматизированный постинг. Отличный пример автоматизации контента для Web3 и крипто-сообществ.
-
-## 🚀 Ключевые особенности
-
-- **AI-Генерация контента:** Использование DeepSeek API для создания уникальных постов с заданным tone of voice (характером).
-- **Асинхронный парсинг (Telethon):** Автоматический мониторинг других Telegram-каналов (например, @markettwits) для сбора свежих новостей.
-- **Интеллектуальная фильтрация:** Поиск релевантных новостей по ключевым словам (криптовалюты, фиат, металлы, мемы и т.д.).
-- **Интеграция с CoinGecko:** Регулярное получение курса TON и автоматическая публикация обзоров рынка (утром и вечером).
-- **Гибкая система планирования:** Публикация постов с заданными (в том числе рандомизированными) интервалами для имитации поведения реального человека.
-
-## 🛠 Технологический стек
-
-- **Язык программирования:** Python 3.8+
-- **Фреймворки и библиотеки:**
-  - `python-telegram-bot` — взаимодействие с Telegram Bot API
-  - `Telethon` — асинхронный парсинг Telegram-каналов
-  - `openai` — взаимодействие с DeepSeek API
-  - `requests` — работа с REST API (CoinGecko)
-- **Инфраструктура / Деплой:** Подготовлено для развертывания на Railway (Nixpacks) и Heroku (`Procfile`).
-
-## 🗂 Архитектура проекта
-
-- `bot.py` — Главный модуль, содержащий бизнес-логику бота, обработчики сообщений и планировщик задач.
-- `config.py` — Модуль конфигурации (чтение переменных окружения, системные промпты, списки ключевых слов).
-- `bot_nanobanana_fix.py` — Вспомогательный модуль интеграции сторонних API генерации медиа.
-- `railway.json` / `Procfile` / `DEPLOY.md` — Файлы для настройки CI/CD и деплоя на облачные платформы.
-
-## ⚙️ Установка и запуск
-
-1. **Клонируйте репозиторий:**
-   ```bash
-   git clone https://github.com/arar228/neyro_projects_telegram.git
-   cd neyro_projects_telegram
-   ```
-
-2. **Установите зависимости:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Настройте переменные окружения:**
-   В проекте используется `python-dotenv`. Создайте файл `.env` в корне проекта и укажите ваши ключи:
-   ```env
-   TELEGRAM_BOT_TOKEN=your_bot_token
-   DEEPSEEK_API_KEY=your_deepseek_key
-   CHANNEL_ID=your_channel_id
-   TELEGRAM_API_ID=your_api_id
-   TELEGRAM_API_HASH=your_api_hash
-   ```
-
-4. **Запуск бота:**
-   ```bash
-   python bot.py
-   ```
-
-## 🔐 Безопасность
-
-Все секретные ключи, токены и приватные конфигурации исключены из репозитория с помощью `.gitignore`. Гарантируется отсутствие утечек конфиденциальных данных. Рекомендуется использовать переменные окружения (Environment Variables) при деплое на сервер (Railway, Heroku, VPS).
-
-## 📝 Лицензия
-
-Этот проект распространяется под лицензией MIT. Использование в открытом доступе разрешено.
-
+Retain Telegram sessions, processed-item state, credentials, and logs privately. Historical credentials require separate review; `.gitignore` is not a security audit. See the [Russian overview](docs/README.ru.md) for the same operating boundaries. No license file is included in this snapshot; this README adds no licensing grant.
