@@ -2,7 +2,7 @@
 
 A Python application that connects Telegram news collection, AI-assisted writing, image generation, and scheduled channel publishing. The implementation focuses on a TON/market-news editorial workflow with configurable prompts, source filtering, and duplicate tracking.
 
-[Architecture](#architecture) · [Setup](#setup-requirements) · [Русский](docs/README.ru.md) · [Existing deployment notes](DEPLOY.md)
+[Architecture](#architecture) · [Setup](#setup-requirements) · [Русский](docs/README.ru.md) · [Historical Railway notes](DEPLOY.md)
 
 ## Engineering focus
 
@@ -26,7 +26,7 @@ Telegram sources / operator commands → filtering → text and image generation
 | [bot.py](bot.py) — `NanoBananaImageGenerator` | Image-generation requests and task polling |
 | [bot.py](bot.py) — `TelegramChannelBot` | Publication state, scheduling, and command handling |
 | [config.py](config.py) | Environment readers, prompts, filters, and timing settings |
-| [Procfile](Procfile), [railway.json](railway.json) | Worker entry-point declarations |
+| [Procfile](Procfile), [railway.json](railway.json) | Retained worker entry-point declarations; Railway configuration is historical |
 
 **Declared stack:** Python, `python-telegram-bot==20.7`, `Telethon==1.34.0`, Requests, and python-dotenv. The current implementation calls providers through Requests; an OpenAI SDK is not declared in this snapshot.
 
@@ -53,6 +53,8 @@ Provision your own environment or ignored local `.env`, which `config.py` loads.
 Keep the existing spelling `ALLOWED_GENETAT_USERS` when configuring this revision. Review prompts and permitted source material, authorize the source account, and grant the bot publishing rights only to the intended test channel.
 
 `python bot.py` is the worker command declared by both deployment files. Starting it can publish posts and incur provider usage. Scripts with `test` in their names can also call providers or publish; inspect their behavior before running them.
+
+`DEPLOY.md` preserves historical Railway instructions. Use the current VPS service definition to confirm the working directory, interpreter, and environment source before operating the worker.
 
 ## Review status
 
